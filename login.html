@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Log In — AR Virtual Physics Lab{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="panel auth-panel">
+    <div class="eyebrow-line"><span class="rule"></span> ACCESS TERMINAL</div>
+    <h2>Log in to the lab</h2>
+    <p class="auth-sub">Enter your credentials to reach your experiment dashboard.</p>
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="field">
+        <label for="identifier">Username or email</label>
+        <input type="text" id="identifier" name="identifier" placeholder="e.g. neha_patil" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn btn-solid btn-block">Log In</button>
+    </form>
+
+    <div class="auth-foot">
+      New to the lab? <a href="{{ url_for('register') }}">Create an account</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

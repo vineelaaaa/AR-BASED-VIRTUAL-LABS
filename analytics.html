@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Analytics — AR Virtual Physics Lab{% endblock %}
+
+{% block content %}
+<section style="padding-top:44px;">
+  <div class="eyebrow-line"><span class="rule"></span> SYSTEM EVALUATION</div>
+  <h1>Usage &amp; usability analytics</h1>
+  <p class="lede">Live metrics gathered from the activity log and feedback tables — used to evaluate the
+  system's performance, usability, and educational effectiveness (Objective 6).</p>
+</section>
+
+<div class="stat-strip">
+  <div class="panel stat-box"><b>{{ user_count }}</b><span>Registered students</span></div>
+  <div class="panel stat-box"><b>{{ total_activity }}</b><span>Total interactions logged</span></div>
+  <div class="panel stat-box"><b>{{ experiments|length }}</b><span>Experiments tracked</span></div>
+</div>
+
+<section>
+  <div class="section-head"><div><h2>Engagement per experiment</h2><p>How many times each lab has been opened, and by how many unique users.</p></div></div>
+  <div class="panel table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Experiment</th><th>Total runs</th><th>Unique users</th></tr></thead>
+      <tbody>
+        {% for row in exp_stats %}
+        <tr>
+          <td>{{ experiments[row.experiment].title if row.experiment in experiments else row.experiment }}</td>
+          <td>{{ row.total_runs }}</td>
+          <td>{{ row.unique_users }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3">No activity logged yet — run an experiment to generate data.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="section-head"><div><h2>Usability feedback</h2><p>Average star rating submitted by students after using each lab.</p></div></div>
+  <div class="panel table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Experiment</th><th>Average rating</th><th>Number of ratings</th></tr></thead>
+      <tbody>
+        {% for row in feedback_stats %}
+        <tr>
+          <td>{{ experiments[row.experiment].title if row.experiment in experiments else row.experiment }}</td>
+          <td>{{ row.avg_rating }} / 5</td>
+          <td>{{ row.num_ratings }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3">No feedback submitted yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="section-head"><div><h2>Mock test performance</h2><p>Average score across all students who have taken each experiment's mock test (Objective 6 evaluation).</p></div></div>
+  <div class="panel table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Experiment</th><th>Average score</th><th>Top score</th><th>Attempts</th></tr></thead>
+      <tbody>
+        {% for row in score_stats %}
+        <tr>
+          <td>{{ experiments[row.experiment].title if row.experiment in experiments else row.experiment }}</td>
+          <td>{{ row.avg_score }}/100</td>
+          <td>{{ row.top_score }}/100</td>
+          <td>{{ row.attempts }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4">No mock tests taken yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

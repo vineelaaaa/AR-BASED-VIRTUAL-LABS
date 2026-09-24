@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Simple Pendulum Lab — AR Virtual Physics Lab{% endblock %}
+{% block body_class %}experiment-page{% endblock %}
+
+{% block content %}
+<div class="workspace-header">
+  <div class="workspace-crumb"><a href="{{ url_for('dashboard') }}">Dashboard</a> / Simple Pendulum (SHM)</div>
+  <div class="workspace-title-row">
+    <div>
+      <h1>{{ exp.title }}</h1>
+      <p style="color:var(--text-dim); max-width:600px;">{{ exp.tagline }}</p>
+      {% if best_score is not none %}<span class="best-score-pill">🏅 Best score: {{ best_score }}/100</span>{% endif %}
+    </div>
+    <div class="workspace-formula">{{ exp.formula }}</div>
+  </div>
+</div>
+
+<div class="lab-grid">
+  <div class="panel canvas-panel">
+    <div class="canvas-toolbar">
+      <div class="dot-row"><span class="dot dot-red"></span><span class="dot dot-amber"></span><span class="dot dot-green"></span></div>
+      <div class="ar-controls">
+        <button class="ar-btn" id="arToggleBtn" type="button" title="Turn on your camera for AR view">📷 AR View</button>
+        <span class="canvas-hint">drag to rotate · scroll to zoom</span>
+      </div>
+    </div>
+    <div class="canvas-stage" id="canvasStage">
+      <video id="arVideo" class="ar-video" playsinline muted autoplay></video>
+      <div id="canvasHost"></div>
+      <div class="ar-hud" id="arHud">
+        <div class="ar-reticle"></div>
+        <div class="ar-hud-text"><span class="ar-rec-dot"></span>AR TRACKING</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel control-panel">
+    <h3>Pendulum Controls</h3>
+    <div class="slider-field">
+      <label>String Length (L) <span class="val" id="lVal">1.5 m</span></label>
+      <input type="range" id="lengthSlider" min="0.3" max="3" step="0.1" value="1.5">
+    </div>
+    <div class="slider-field">
+      <label>Gravity (g) <span class="val" id="gVal">9.8 m/s²</span></label>
+      <input type="range" id="gravitySlider" min="1.6" max="24.8" step="0.1" value="9.8">
+    </div>
+    <div class="slider-field">
+      <label>Initial Angle (θ) <span class="val" id="aVal">25°</span></label>
+      <input type="range" id="angleSlider" min="5" max="70" step="1" value="25">
+    </div>
+    <div class="slider-field">
+      <label>Damping <span class="val" id="dVal">0.02</span></label>
+      <input type="range" id="dampingSlider" min="0" max="0.2" step="0.01" value="0.02">
+    </div>
+
+    <div class="readout-grid">
+      <div class="readout-box"><div class="rlabel">Period (T)</div><div class="rval" id="periodReadout">2.46 s</div></div>
+      <div class="readout-box"><div class="rlabel">Frequency (f)</div><div class="rval" id="freqReadout">0.41 Hz</div></div>
+    </div>
+
+    <div class="control-actions">
+      <button class="btn btn-ghost btn-sm" id="pauseBtn">Pause</button>
+      <button class="btn btn-amber btn-sm" id="resetBtn">Release Again</button>
+    </div>
+
+    <div class="steps-panel" data-experiment="pendulum">
+      <h3>Step-by-step procedure <button class="voice-guide-btn auto-guide-btn" type="button">🔊 Auto Guide</button></h3>
+      <ol class="step-list">
+        <li>Set the string length using the Length slider.</li>
+        <li>Choose the gravitational field (Earth, Moon, or custom) using the Gravity slider.</li>
+        <li>Pull the bob to a starting angle with the Angle slider, then release it.</li>
+        <li>Observe the oscillation in 3D — note how larger L increases the period.</li>
+        <li>Record the Period readout for at least 3 different lengths.</li>
+        <li>Verify that T = 2π√(L/g) matches the recorded values.</li>
+      </ol>
+    </div>
+
+    <div class="feedback-row" data-experiment="pendulum">
+      <span style="font-size:.82rem; color:var(--text-dim);">Rate this experiment:</span>
+      <button class="star-btn" aria-label="1 star">★</button>
+      <button class="star-btn" aria-label="2 star">★</button>
+      <button class="star-btn" aria-label="3 star">★</button>
+      <button class="star-btn" aria-label="4 star">★</button>
+      <button class="star-btn" aria-label="5 star">★</button>
+      <span class="feedback-note" style="font-size:.78rem; color:var(--success); margin-left:6px;"></span>
+    </div>
+  </div>
+</div>
+
+<div class="info-tabs" data-tab-group>
+  <button class="info-tab-btn active" data-tab-target="tabTheory">Theory</button>
+  <button class="info-tab-btn" data-tab-target="tabAim">Aim &amp; Apparatus</button>
+  <button class="info-tab-btn" data-tab-target="tabObservation">Observation Table</button>
+  <button class="info-tab-btn" data-tab-target="tabMockTest">Mock Test</button>
+</div>
+
+<div class="info-tab-panel active" id="tabTheory">
+  <div class="panel" style="padding:26px;">
+    <p>A <strong>simple pendulum</strong> exhibits Simple Harmonic Motion (SHM) for small angles.
+    Its period — the time for one complete oscillation — depends only on the string length and
+    local gravity, not on the mass of the bob or (for small angles) the amplitude.</p>
+    <p class="formula" style="font-size:1.1rem; color:var(--amber);">T = 2π √(L / g)</p>
+    <p>Increasing the length <span class="mono">L</span> increases the period; increasing gravity
+    <span class="mono">g</span> decreases it — which is why a pendulum swings slower on the Moon.
+    The damping control simulates air resistance gradually reducing the swing amplitude.</p>
+  </div>
+</div>
+
+<div class="info-tab-panel" id="tabAim">
+  <div class="panel" style="padding:26px;">
+    <p><strong>Aim:</strong> To study Simple Harmonic Motion and verify how the period of a simple
+    pendulum depends on its length and on gravitational acceleration.</p>
+    <p><strong>Virtual apparatus:</strong> Rigid support stand, inextensible string, spherical bob,
+    protractor for angle measurement — all modeled as manipulable 3D objects.</p>
+  </div>
+</div>
+
+<div class="info-tab-panel" id="tabObservation">
+  <div class="panel" style="padding:26px;">
+    <p>Use the sliders to fill in an observation table like the one below during your practical:</p>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Trial</th><th>Length (m)</th><th>Gravity (m/s²)</th><th>Period (s)</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>2</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>3</td><td>—</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="info-tab-panel" id="tabMockTest">
+  <div class="panel mock-test-panel" data-experiment="pendulum" style="padding:26px;">
+    <h3 style="margin-top:0;">Mock Test — Simple Pendulum</h3>
+    <p style="color:var(--text-dim); font-size:.88rem;">Answer the quiz, then predict the reading from your <em>current</em> pendulum settings to earn practical credit.</p>
+
+    {% for q in quiz %}
+    <div class="quiz-question" data-qindex="{{ loop.index0 }}">
+      <p class="qtext">{{ loop.index }}. {{ q.q }}</p>
+      <div class="quiz-options">
+        {% for opt in q.options %}
+        <label class="quiz-option">
+          <input type="radio" name="quiz-pendulum-{{ loop.index0 }}" value="{{ loop.index0 }}">
+          {{ opt }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="practical-box">
+      <p class="scenario-text">Using your <b>current settings</b> from the control panel (L and g), calculate the <b>period (T)</b> in seconds and enter it below.</p>
+      <p class="scenario-text" id="currentSettingsEcho" style="color:var(--text-hi);"></p>
+      <div class="answer-row">
+        <input type="number" step="0.01" id="practicalAnswer" placeholder="Your answer (s)">
+        <button class="btn btn-solid btn-sm" id="submitMockTestBtn">Submit Test</button>
+      </div>
+    </div>
+
+    <div class="result-banner" id="resultBanner">
+      <div class="score-big" id="scoreBig">0/100</div>
+      <div class="result-breakdown" id="resultBreakdown"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="{{ url_for('static', filename='js/pendulum.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceguide.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mocktest.js') }}"></script>
+{% endblock %}

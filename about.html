@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}About the Project — AR Virtual Physics Lab{% endblock %}
+
+{% block content %}
+<section style="padding-top:50px;">
+  <div class="eyebrow-line"><span class="rule"></span> PROJECT OVERVIEW</div>
+  <h1 style="max-width:760px;">An AR-based virtual laboratory for engineering practicals</h1>
+  <p class="lede" style="max-width:720px;">
+    This system lets students perform core physics experiments through realistic, manipulable
+    3D models rendered directly in the browser — an augmented-reality-style layer of interaction
+    (rotate, zoom, move, control) placed over classic engineering practicals, without needing a
+    physical lab, dedicated hardware, or an AR headset.
+  </p>
+</section>
+
+<section id="objectives">
+  <div class="section-head"><div><h2>Objectives</h2></div></div>
+  <ul class="obj-list">
+    <li><span class="obj-num">01</span><div>Develop an AR-based virtual laboratory system for engineering practical experiments and interactive learning.</div></li>
+    <li><span class="obj-num">02</span><div>Design realistic 3D models of laboratory tools and experiment setups for better visualization and understanding.</div></li>
+    <li><span class="obj-num">03</span><div>Implement AR-style technology for real-time experiment visualization and simulation.</div></li>
+    <li><span class="obj-num">04</span><div>Provide interactive features such as zooming, rotation, movement, and virtual experiment control for a better user experience.</div></li>
+    <li><span class="obj-num">05</span><div>Include step-by-step instructions and procedures so students can perform experiments correctly and independently.</div></li>
+    <li><span class="obj-num">06</span><div>Evaluate the system's performance, usability, and educational effectiveness through testing and analysis.</div></li>
+  </ul>
+</section>
+
+<section id="experiments-detail">
+  <div class="section-head"><div><h2>About the experiments</h2><p>Three physics practicals, each modeled in interactive 3D.</p></div></div>
+  <div class="exp-grid">
+    {% for id, exp in experiments.items() %}
+    <div class="panel exp-card">
+      <h3>{{ exp.title }}</h3>
+      <div class="exp-formula">{{ exp.formula }}</div>
+      <p>{{ exp.tagline }}</p>
+      <div class="exp-concepts">{% for c in exp.concepts %}<span class="chip">{{ c }}</span>{% endfor %}</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section id="stack">
+  <div class="section-head"><div><h2>Technology stack</h2><p>Deliberately lightweight — no build tools, no external servers required.</p></div></div>
+  <div class="stack-grid">
+    {% for t in tech_stack %}
+    <div class="panel stack-item">
+      <h4>{{ t.name }}</h4>
+      <p>{{ t.role }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section id="methodology">
+  <div class="section-head"><div><h2>Development methodology</h2></div></div>
+  <div class="timeline">
+    <div class="panel"><b>Phase 1</b>Requirement analysis &amp; experiment selection</div>
+    <div class="panel"><b>Phase 2</b>3D model design (Three.js / WebGL geometry)</div>
+    <div class="panel"><b>Phase 3</b>Flask backend, SQLite schema, authentication</div>
+    <div class="panel"><b>Phase 4</b>Interactive controls &amp; real-time physics engine</div>
+    <div class="panel"><b>Phase 5</b>Usability testing &amp; feedback-driven evaluation</div>
+  </div>
+</section>
+
+<section>
+  <div class="panel" style="padding:36px;">
+    <h2>System architecture</h2>
+    <p style="max-width:760px;">
+      The Flask application serves Jinja2-rendered pages and a small JSON API. SQLite3 stores
+      user accounts (with hashed passwords) plus two activity tables — an <span class="mono">activity_log</span>
+      that timestamps every experiment interaction, and a <span class="mono">feedback</span> table capturing
+      star ratings — which together power the built-in Analytics page used to evaluate usability
+      and engagement (Objective 6). Each experiment page loads a dedicated Three.js scene that
+      reads slider input, recomputes the relevant physics formula, and animates the 3D model and
+      live readouts in real time.
+    </p>
+  </div>
+</section>
+{% endblock %}

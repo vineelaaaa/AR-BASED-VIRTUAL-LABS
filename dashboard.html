@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — AR Virtual Physics Lab{% endblock %}
+
+{% block content %}
+<div class="dash-header">
+  <div class="dash-welcome">
+    <span>&gt; SESSION ACTIVE</span>
+    <h1>Welcome back, {{ current_user.full_name }}</h1>
+  </div>
+</div>
+
+<div class="stat-strip">
+  <div class="panel stat-box"><b>{{ experiments|length }}</b><span>Experiments available</span></div>
+  <div class="panel stat-box"><b>{{ completed_count }}</b><span>Experiments attempted</span></div>
+  <div class="panel stat-box"><b>{{ total_credits }}/{{ max_credits }}</b><span>Mock test credits earned</span></div>
+</div>
+
+<div class="section-head">
+  <div>
+    <h2>Choose an experiment</h2>
+    <p>Pick a lab below to open its interactive 3D workspace, then take the Mock Test tab for credit.</p>
+  </div>
+</div>
+
+<div class="exp-grid">
+  {% for id, exp in experiments.items() %}
+  <div class="panel exp-card">
+    <div class="exp-card-top">
+      <div class="exp-icon">
+        {% if exp.icon == 'circuit' %}
+        <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M3 12h4M17 12h4M9 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0Z" stroke-linecap="round"/><path d="M7 12V6h4M17 6h-6M7 12v6h4" stroke-linecap="round"/></svg>
+        {% elif exp.icon == 'pendulum' %}
+        <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M4 4h16M12 4v4" stroke-linecap="round"/><path d="M12 8a7 7 0 0 0 7 9" stroke-linecap="round"/><circle cx="19" cy="17" r="2.4"/></svg>
+        {% elif exp.icon == 'lens' %}
+        <svg viewBox="0 0 24 24" stroke-width="1.6"><ellipse cx="12" cy="12" rx="5" ry="8"/><path d="M2 12h4M18 12h4" stroke-linecap="round"/></svg>
+        {% else %}
+        <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M3 20h18M3 20 9 8l4 5 3-4 3 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        {% endif %}
+      </div>
+      <span class="exp-tag">{{ exp.difficulty }}</span>
+    </div>
+    <h3>{{ exp.title }}</h3>
+    <p>{{ exp.tagline }}</p>
+    <div class="exp-formula">{{ exp.formula }}</div>
+    <div class="exp-concepts">{% for c in exp.concepts %}<span class="chip">{{ c }}</span>{% endfor %}</div>
+
+    {% if id in progress %}
+      <span class="progress-badge">✓ Attempted {{ progress[id].runs }}× · last run {{ progress[id].last_run[:16].replace('T',' ') }}</span>
+    {% else %}
+      <span class="progress-badge" style="color:var(--text-dim);">Not attempted yet</span>
+    {% endif %}
+
+    {% if id in best_scores %}
+      <span class="best-score-pill">🏅 Best score: {{ best_scores[id] }}/100</span>
+    {% endif %}
+
+    <a href="{{ url_for('experiment', exp_id=id) }}" class="btn btn-solid btn-sm">Launch Lab</a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Convex/Concave Lens Lab — AR Virtual Physics Lab{% endblock %}
+{% block body_class %}experiment-page{% endblock %}
+
+{% block content %}
+<div class="workspace-header">
+  <div class="workspace-crumb"><a href="{{ url_for('dashboard') }}">Dashboard</a> / Convex / Concave Lens Optics Lab</div>
+  <div class="workspace-title-row">
+    <div>
+      <h1>{{ exp.title }}</h1>
+      <p style="color:var(--text-dim); max-width:600px;">{{ exp.tagline }}</p>
+      {% if best_score is not none %}<span class="best-score-pill">🏅 Best score: {{ best_score }}/100</span>{% endif %}
+    </div>
+    <div class="workspace-formula">{{ exp.formula }}</div>
+  </div>
+</div>
+
+<div class="lab-grid">
+  <div class="panel canvas-panel">
+    <div class="canvas-toolbar">
+      <div class="dot-row"><span class="dot dot-red"></span><span class="dot dot-amber"></span><span class="dot dot-green"></span></div>
+      <div class="ar-controls">
+        <button class="ar-btn" id="arToggleBtn" type="button" title="Turn on your camera for AR view">📷 AR View</button>
+        <span class="canvas-hint">drag to rotate · scroll to zoom</span>
+      </div>
+    </div>
+    <div class="canvas-stage" id="canvasStage">
+      <video id="arVideo" class="ar-video" playsinline muted autoplay></video>
+      <div id="canvasHost"></div>
+      <div class="ar-hud" id="arHud">
+        <div class="ar-reticle"></div>
+        <div class="ar-hud-text"><span class="ar-rec-dot"></span>AR TRACKING</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel control-panel">
+    <h3>Lens Controls</h3>
+
+    <div class="slider-field">
+      <label>Lens Type</label>
+      <div class="control-actions" style="margin-top:4px;">
+        <button class="btn btn-solid btn-sm" id="convexBtn" type="button">Convex (Converging)</button>
+        <button class="btn btn-ghost btn-sm" id="concaveBtn" type="button">Concave (Diverging)</button>
+      </div>
+    </div>
+
+    <div class="slider-field">
+      <label>Object Distance (u) <span class="val" id="uVal">30 cm</span></label>
+      <input type="range" id="objectSlider" min="5" max="60" step="1" value="30">
+    </div>
+    <div class="slider-field">
+      <label>Focal Length (f) <span class="val" id="fVal">15 cm</span></label>
+      <input type="range" id="focalSlider" min="5" max="40" step="1" value="15">
+    </div>
+
+    <div class="readout-grid">
+      <div class="readout-box"><div class="rlabel">Image Distance (v)</div><div class="rval" id="vReadout">30.00 cm</div></div>
+      <div class="readout-box"><div class="rlabel">Magnification (m)</div><div class="rval" id="mReadout">-1.00</div></div>
+      <div class="readout-box"><div class="rlabel">Image Nature</div><div class="rval" id="natureReadout">Real</div></div>
+      <div class="readout-box"><div class="rlabel">Orientation</div><div class="rval" id="orientReadout">Inverted</div></div>
+    </div>
+
+    <div class="control-actions">
+      <button class="btn btn-ghost btn-sm" id="resetBtn">Reset</button>
+    </div>
+
+    <div class="steps-panel" data-experiment="lens">
+      <h3>Step-by-step procedure <button class="voice-guide-btn auto-guide-btn" type="button">🔊 Auto Guide</button></h3>
+      <ol class="step-list">
+        <li>Choose Convex or Concave using the lens type buttons.</li>
+        <li>Set the object distance (u) — how far the object sits from the lens.</li>
+        <li>Set the focal length (f) of the lens.</li>
+        <li>Watch the 3D ray diagram: the parallel ray and the central ray locate the image.</li>
+        <li>Read the Image Distance, Magnification, Nature, and Orientation from the readouts.</li>
+        <li>Repeat with the object inside and outside the focal length to see the image change.</li>
+      </ol>
+    </div>
+
+    <div class="feedback-row" data-experiment="lens">
+      <span style="font-size:.82rem; color:var(--text-dim);">Rate this experiment:</span>
+      <button class="star-btn" aria-label="1 star">★</button>
+      <button class="star-btn" aria-label="2 star">★</button>
+      <button class="star-btn" aria-label="3 star">★</button>
+      <button class="star-btn" aria-label="4 star">★</button>
+      <button class="star-btn" aria-label="5 star">★</button>
+      <span class="feedback-note" style="font-size:.78rem; color:var(--success); margin-left:6px;"></span>
+    </div>
+  </div>
+</div>
+
+<div class="info-tabs" data-tab-group>
+  <button class="info-tab-btn active" data-tab-target="tabTheory">Theory</button>
+  <button class="info-tab-btn" data-tab-target="tabAim">Aim &amp; Apparatus</button>
+  <button class="info-tab-btn" data-tab-target="tabObservation">Observation Table</button>
+  <button class="info-tab-btn" data-tab-target="tabMockTest">Mock Test</button>
+</div>
+
+<div class="info-tab-panel active" id="tabTheory">
+  <div class="panel" style="padding:26px;">
+    <p>A <strong>convex (converging) lens</strong> bulges outward and bends light rays inward towards
+    a focal point, forming real or virtual images depending on object placement. A
+    <strong>concave (diverging) lens</strong> curves inward and spreads light rays apart, always
+    producing a virtual, erect, diminished image.</p>
+    <p class="formula" style="font-size:1.1rem; color:var(--amber);">1/v − 1/u = 1/f &nbsp;&nbsp; m = v/u</p>
+    <p>Using the Cartesian sign convention: distances are measured from the optical centre, the
+    object distance <span class="mono">u</span> is negative (object to the left), and the focal
+    length <span class="mono">f</span> is positive for a convex lens and negative for a concave
+    lens. A positive image distance <span class="mono">v</span> means a real image forms on the
+    far side of the lens; a negative <span class="mono">v</span> means a virtual image forms on
+    the same side as the object.</p>
+  </div>
+</div>
+
+<div class="info-tab-panel" id="tabAim">
+  <div class="panel" style="padding:26px;">
+    <p><strong>Aim:</strong> To study image formation by convex and concave lenses and verify the
+    lens formula by observing how image distance and magnification change with object distance
+    and focal length.</p>
+    <p><strong>Virtual apparatus:</strong> Optical bench, convex/concave lens mount, illuminated
+    object (arrow), screen — all modeled as a manipulable 3D ray-diagram scene.</p>
+  </div>
+</div>
+
+<div class="info-tab-panel" id="tabObservation">
+  <div class="panel" style="padding:26px;">
+    <p>Use the sliders to fill in an observation table like the one below during your practical:</p>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Trial</th><th>Lens type</th><th>u (cm)</th><th>f (cm)</th><th>v (cm)</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Convex</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>2</td><td>Convex</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>3</td><td>Concave</td><td>—</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="info-tab-panel" id="tabMockTest">
+  <div class="panel mock-test-panel" data-experiment="lens" style="padding:26px;">
+    <h3 style="margin-top:0;">Mock Test — Convex/Concave Lens</h3>
+    <p style="color:var(--text-dim); font-size:.88rem;">Answer the quiz, then predict the reading from your <em>current</em> lens settings to earn practical credit.</p>
+
+    {% for q in quiz %}
+    <div class="quiz-question" data-qindex="{{ loop.index0 }}">
+      <p class="qtext">{{ loop.index }}. {{ q.q }}</p>
+      <div class="quiz-options">
+        {% for opt in q.options %}
+        <label class="quiz-option">
+          <input type="radio" name="quiz-lens-{{ loop.index0 }}" value="{{ loop.index0 }}">
+          {{ opt }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="practical-box">
+      <p class="scenario-text">Using your <b>current settings</b> from the control panel (lens type, u, f), calculate the <b>image distance v</b> in cm and enter it below.</p>
+      <p class="scenario-text" id="currentSettingsEcho" style="color:var(--text-hi);"></p>
+      <div class="answer-row">
+        <input type="number" step="0.01" id="practicalAnswer" placeholder="Your answer (cm)">
+        <button class="btn btn-solid btn-sm" id="submitMockTestBtn">Submit Test</button>
+      </div>
+    </div>
+
+    <div class="result-banner" id="resultBanner">
+      <div class="score-big" id="scoreBig">0/100</div>
+      <div class="result-breakdown" id="resultBreakdown"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="{{ url_for('static', filename='js/lens.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceguide.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mocktest.js') }}"></script>
+{% endblock %}

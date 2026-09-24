@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}Ohm's Law Circuit Lab — AR Virtual Physics Lab{% endblock %}
+{% block body_class %}experiment-page{% endblock %}
+
+{% block content %}
+<div class="workspace-header">
+  <div class="workspace-crumb"><a href="{{ url_for('dashboard') }}">Dashboard</a> / Ohm's Law Circuit Lab</div>
+  <div class="workspace-title-row">
+    <div>
+      <h1>{{ exp.title }}</h1>
+      <p style="color:var(--text-dim); max-width:600px;">{{ exp.tagline }}</p>
+      {% if best_score is not none %}<span class="best-score-pill">🏅 Best score: {{ best_score }}/100</span>{% endif %}
+    </div>
+    <div class="workspace-formula">{{ exp.formula }}</div>
+  </div>
+</div>
+
+<div class="panel">
+  <h3 style="margin-top:0;">Step 1 — Wire the circuit yourself</h3>
+  <div class="guidelines-box">
+    <p class="guidelines-title">📋 Wiring guidelines — read first, then connect manually</p>
+    <ol class="guidelines-list">
+      <li>This is a <strong>series circuit</strong>: every component connects one after another in a single loop, with no branches.</li>
+      <li>Connect the battery's <strong>+</strong> terminal to <em>either</em> terminal of the resistor.</li>
+      <li>Connect the resistor's <em>other</em> terminal to <em>either</em> terminal of the ammeter.</li>
+      <li>Connect the ammeter's remaining terminal back to the battery's <strong>−</strong> terminal to close the loop.</li>
+      <li>Each terminal only takes one wire — wiring two terminals of the <em>same</em> component together will short it out and be rejected.</li>
+    </ol>
+  </div>
+
+  <p style="color:var(--text-dim); font-size:.85rem; margin-top:14px;">Drag from one terminal (the small circles) to another to draw a wire — or tap one terminal, then tap the terminal you want to join it to.</p>
+
+  <div class="circuit-board-wrap">
+    <svg id="circuitSvg" viewBox="0 0 700 260" class="circuit-board">
+      <!-- wires drawn here, behind components -->
+      <g id="wiresLayer"></g>
+      <line id="tempWire" x1="0" y1="0" x2="0" y2="0" class="temp-wire" style="display:none;"></line>
+
+      <!-- Battery -->
+      <g class="component-group">
+        <rect x="40" y="55" width="70" height="150" rx="8" class="component-body"></rect>
+        <text x="75" y="135" text-anchor="middle" class="component-label">🔋</text>
+        <text x="75" y="42" text-anchor="middle" class="component-caption">Battery</text>
+        <text x="75" y="70" text-anchor="middle" class="terminal-sign">+</text>
+        <text x="75" y="200" text-anchor="middle" class="terminal-sign">−</text>
+      </g>
+      <circle class="terminal" data-component="battery" data-terminal="pos" data-cx="75" data-cy="55" cx="75" cy="55" r="10"></circle>
+      <circle class="terminal" data-component="battery" data-terminal="neg" data-cx="75" data-cy="205" cx="75" cy="205" r="10"></circle>
+
+      <!-- Resistor -->
+      <g class="component-group">
+        <rect x="270" y="100" width="160" height="50" rx="8" class="component-body"></rect>
+        <text x="350" y="130" text-anchor="middle" class="component-label">🎛️</text>
+        <text x="350" y="90" text-anchor="middle" class="component-caption">Resistor</text>
+      </g>
+      <circle class="terminal" data-component="resistor" data-terminal="a" data-cx="270" data-cy="125" cx="270" cy="125" r="10"></circle>
+      <circle class="terminal" data-component="resistor" data-terminal="b" data-cx="430" data-cy="125" cx="430" cy="125" r="10"></circle>
+
+      <!-- Ammeter -->
+      <g class="component-group">
+        <circle cx="590" cy="125" r="55" class="component-body"></circle>
+        <text x="590" y="135" text-anchor="middle" class="component-label">📟</text>
+        <text x="590" y="55" text-anchor="middle" class="component-caption">Ammeter</text>
+      </g>
+      <circle class="terminal" data-component="ammeter" data-terminal="a" data-cx="535" data-cy="125" cx="535" cy="125" r="10"></circle>
+      <circle class="terminal" data-component="ammeter" data-terminal="b" data-cx="645" data-cy="125" cx="645" cy="125" r="10"></circle>
+    </svg>
+  </div>
+
+  <div class="builder-status">
+    <span class="builder-status-text" id="builderStatusText">0 / 3 wires connected</span>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-ghost btn-sm" id="resetWiringBtn">↺ Reset Wiring</button>
+      <button class="btn btn-solid btn-sm" id="launchExperimentBtn" disabled>🚀 Launch Experiment</button>
+    </div>
+  </div>
+</div>
+
+<div class="sim-lock-wrap" style="margin-top:22px;">
+  <div class="lab-grid">
+    <div class="panel canvas-panel">
+      <div class="canvas-toolbar">
+        <div class="dot-row"><span class="dot dot-red"></span><span class="dot dot-amber"></span><span class="dot dot-green"></span></div>
+        <div class="ar-controls">
+          <button class="ar-btn" id="arToggleBtn" type="button" title="Turn on your camera for AR view">📷 AR View</button>
+          <span class="canvas-hint">drag to rotate · scroll to zoom</span>
+        </div>
+      </div>
+      <div class="canvas-stage" id="canvasStage">
+        <video id="arVideo" class="ar-video" playsinline muted autoplay></video>
+        <div id="canvasHost"></div>
+        <div class="ar-hud" id="arHud">
+          <div class="ar-reticle"></div>
+          <div class="ar-hud-text"><span class="ar-rec-dot"></span>AR TRACKING</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel control-panel">
+      <h3>Circuit Controls</h3>
+      <div class="slider-field">
+        <label>Voltage (V) <span class="val" id="vVal">6.0 V</span></label>
+        <input type="range" id="voltageSlider" min="1" max="20" step="0.5" value="6">
+      </div>
+      <div class="slider-field">
+        <label>Resistance (R) <span class="val" id="rVal">10 Ω</span></label>
+        <input type="range" id="resistanceSlider" min="1" max="100" step="1" value="10">
+      </div>
+
+      <div class="readout-grid">
+        <div class="readout-box"><div class="rlabel">Current (I)</div><div class="rval" id="currentReadout">0.60 A</div></div>
+        <div class="readout-box"><div class="rlabel">Power (P)</div><div class="rval" id="powerReadout">3.60 W</div></div>
+      </div>
+
+      <div class="control-actions">
+        <button class="btn btn-ghost btn-sm" id="resetBtn">Reset</button>
+        <button class="btn btn-amber btn-sm" id="randomBtn">Randomize</button>
+      </div>
+
+      <div class="steps-panel" data-experiment="ohm">
+        <h3>Step-by-step procedure <button class="voice-guide-btn auto-guide-btn" type="button">🔊 Auto Guide</button></h3>
+        <ol class="step-list">
+          <li>Read the wiring guidelines above, then connect the battery's positive terminal to one terminal of the resistor.</li>
+          <li>Connect the resistor's other terminal to one terminal of the ammeter.</li>
+          <li>Connect the ammeter's remaining terminal back to the battery's negative terminal to close the loop.</li>
+          <li>Press Launch Experiment once all three wires are correctly connected.</li>
+          <li>Set the source voltage and the resistor value using the sliders.</li>
+          <li>Watch the glowing particles along the wire, then record the Current and Power readouts and verify that current equals voltage divided by resistance.</li>
+        </ol>
+      </div>
+
+      <div class="feedback-row" data-experiment="ohm">
+        <span style="font-size:.82rem; color:var(--text-dim);">Rate this experiment:</span>
+        <button class="star-btn" aria-label="1 star">★</button>
+        <button class="star-btn" aria-label="2 star">★</button>
+        <button class="star-btn" aria-label="3 star">★</button>
+        <button class="star-btn" aria-label="4 star">★</button>
+        <button class="star-btn" aria-label="5 star">★</button>
+        <span class="feedback-note" style="font-size:.78rem; color:var(--success); margin-left:6px;"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sim-lock-overlay" id="simLockOverlay">
+    <div class="lock-icon">🔒</div>
+    <p>Complete the circuit above, then press <strong>Launch Experiment</strong> to unlock the live 3D simulation.</p>
+  </div>
+</div>
+
+<div class="info-tabs" data-tab-group>
+  <button class="info-tab-btn active" data-tab-target="tabTheory">Theory</button>
+  <button class="info-tab-btn" data-tab-target="tabAim">Aim &amp; Apparatus</button>
+  <button class="info-tab-btn" data-tab-target="tabObservation">Observation Table</button>
+  <button class="info-tab-btn" data-tab-target="tabMockTest">Mock Test</button>
+</div>
+
+<div class="info-tab-panel active" id="tabTheory">
+  <div class="panel" style="padding:26px;">
+    <p><strong>Ohm's Law</strong> states that the current flowing through a conductor between two
+    points is directly proportional to the voltage across the two points, provided temperature and
+    other physical conditions remain constant.</p>
+    <p class="formula" style="font-size:1.1rem; color:var(--amber);">V = I × R</p>
+    <p>Where <span class="mono">V</span> is voltage in volts, <span class="mono">I</span> is current
+    in amperes, and <span class="mono">R</span> is resistance in ohms.</p>
+  </div>
+</div>
+
+<div class="info-tab-panel" id="tabAim">
+  <div class="panel" style="padding:26px;">
+    <p><strong>Aim:</strong> To verify Ohm's Law and determine the relationship between voltage,
+    current, and resistance by wiring and simulating a series circuit.</p>
+    <p><strong>Virtual apparatus:</strong> DC battery source, carbon-film resistor, digital ammeter,
+    connecting wires — dragged into place and rendered as manipulable 3D objects.</p>
+  </div>
+</div>
+
+<div class="info-tab-panel" id="tabObservation">
+  <div class="panel" style="padding:26px;">
+    <p>Use the sliders to fill in an observation table like the one below during your practical:</p>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Trial</th><th>Voltage (V)</th><th>Resistance (Ω)</th><th>Current (A)</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>2</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>3</td><td>—</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="info-tab-panel" id="tabMockTest">
+  <div class="panel mock-test-panel" data-experiment="ohm" style="padding:26px;">
+    <h3 style="margin-top:0;">Mock Test — Ohm's Law</h3>
+    <p style="color:var(--text-dim); font-size:.88rem;">Answer the quiz, then predict the reading from your <em>current</em> circuit settings. Correctly wiring the circuit above earns bonus credit.</p>
+
+    {% for q in quiz %}
+    <div class="quiz-question" data-qindex="{{ loop.index0 }}">
+      <p class="qtext">{{ loop.index }}. {{ q.q }}</p>
+      <div class="quiz-options">
+        {% for opt in q.options %}
+        <label class="quiz-option">
+          <input type="radio" name="quiz-ohm-{{ loop.index0 }}" value="{{ loop.index0 }}">
+          {{ opt }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="practical-box">
+      <p class="scenario-text">Using your <b>current settings</b> from the control panel (V and R), calculate the <b>current (I)</b> in amperes and enter it below.</p>
+      <p class="scenario-text" id="currentSettingsEcho" style="color:var(--text-hi);"></p>
+      <div class="answer-row">
+        <input type="number" step="0.001" id="practicalAnswer" placeholder="Your answer (A)">
+        <button class="btn btn-solid btn-sm" id="submitMockTestBtn">Submit Test</button>
+      </div>
+    </div>
+
+    <div class="result-banner" id="resultBanner">
+      <div class="score-big" id="scoreBig">0/100</div>
+      <div class="result-breakdown" id="resultBreakdown"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="{{ url_for('static', filename='js/ohm.js') }}"></script>
+<script src="{{ url_for('static', filename='js/circuit_builder.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceguide.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mocktest.js') }}"></script>
+{% endblock %}

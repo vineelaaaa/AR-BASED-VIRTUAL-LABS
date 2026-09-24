@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}AR Virtual Physics Lab{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}" data-experiment="{{ exp.id if exp is defined else '' }}">
+
+<div class="scanline-overlay"></div>
+
+<nav class="navbar">
+  <a href="{{ url_for('home') }}" class="brand">
+    <span class="brand-mark">
+      <span class="brand-ring"></span>
+      <span class="brand-dot"></span>
+    </span>
+    <span class="brand-text">AR<span class="brand-text-accent">LAB</span></span>
+  </a>
+
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <div class="nav-links" id="navLinks">
+    <a href="{{ url_for('home') }}" class="{{ 'active' if request.endpoint=='home' }}">Home</a>
+    <a href="{{ url_for('about') }}" class="{{ 'active' if request.endpoint=='about' }}">About &amp; Tech Stack</a>
+    {% if current_user.id %}
+      <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint=='dashboard' }}">Dashboard</a>
+      <a href="{{ url_for('analytics') }}" class="{{ 'active' if request.endpoint=='analytics' }}">Analytics</a>
+      <span class="nav-user">{{ current_user.full_name }}</span>
+      <a href="{{ url_for('logout') }}" class="btn btn-ghost btn-sm">Log out</a>
+    {% else %}
+      <a href="{{ url_for('login') }}" class="btn btn-ghost btn-sm">Log in</a>
+      <a href="{{ url_for('register') }}" class="btn btn-solid btn-sm">Register</a>
+    {% endif %}
+  </div>
+</nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-stack">
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">
+          <span>{{ message }}</span>
+          <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<main class="page-shell">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div>
+      <div class="brand-text footer-brand">AR<span class="brand-text-accent">LAB</span></div>
+      <p>An Augmented-Reality-inspired virtual laboratory for engineering &amp; physics practicals — built for students who can't always access a physical lab bench.</p>
+    </div>
+    <div>
+      <h4>Experiments</h4>
+      <ul>
+        <li><a href="{{ url_for('experiment', exp_id='ohm') }}">Ohm's Law Circuit</a></li>
+        <li><a href="{{ url_for('experiment', exp_id='pendulum') }}">Simple Pendulum</a></li>
+        <li><a href="{{ url_for('experiment', exp_id='lens') }}">Lens Optics</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <ul>
+        <li><a href="{{ url_for('about') }}">Objectives</a></li>
+        <li><a href="{{ url_for('about') }}#stack">Tech Stack</a></li>
+        <li><a href="{{ url_for('about') }}#methodology">Methodology</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">© {{ now_year }} AR Virtual Physics Lab — Academic Mini Project</div>
+</footer>
+
+{% if current_user.id %}
+<button class="chatbot-toggle" id="chatbotToggle" aria-label="Open AI Lab Assistant" title="AI Lab Assistant">💬</button>
+<div class="chatbot-panel" id="chatbotPanel">
+  <div class="chatbot-header">
+    <h4><span class="status-dot"></span>AI Lab Assistant</h4>
+    <button class="chatbot-close" id="chatbotClose" aria-label="Close chat">&times;</button>
+  </div>
+  <div class="chatbot-messages" id="chatbotMessages">
+    <div class="chat-msg bot">Hi! I'm your AI lab assistant, powered by Gemini. Ask me about Ohm's Law, the pendulum, lenses — or anything you're stuck on. Tap the mic to talk instead of typing.</div>
+  </div>
+  <div class="chatbot-hint" id="chatbotHint">{% if not gemini_available %}⚠ Gemini API key not configured on the server — see README.{% endif %}</div>
+  <div class="chatbot-input-row">
+    <button class="chat-icon-btn" id="chatMicBtn" aria-label="Speak your question" title="Speak">🎙️</button>
+    <input type="text" id="chatbotInput" placeholder="Ask about an experiment…" autocomplete="off">
+    <button class="chat-icon-btn" id="chatSendBtn" aria-label="Send" title="Send">➤</button>
+  </div>
+</div>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% if current_user.id %}<script src="{{ url_for('static', filename='js/chatbot.js') }}" data-experiment="{{ exp.id if exp is defined else '' }}"></script>{% endif %}
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>
